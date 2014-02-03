@@ -7,7 +7,7 @@ const int petal4 = 3;
 //petal thresholds
 int thresh1 = 300;
 int thresh2 = 200;
-int thresh3 = 100;
+int thresh3 = 400;
 int thresh4 = 100;
 
 //photoresistor pin
@@ -68,12 +68,37 @@ void loop() {
   Serial.println(lightVal);
 
   
-  //read photoresistor
-  //map photoresisor val from 0 to 200
+  //check threshold for each petal
+  if(lightVal > thresh1)
+  {
+    digitalWrite(petal1, HIGH);
+  }else{
+    digitalWrite(petal1, LOW);
+  }
   
   //check threshold for each petal
-  //set petalPin to high
+  if(lightVal > thresh2)
+  {
+    digitalWrite(petal2, HIGH);
+  }else{
+    digitalWrite(petal2, LOW);
+  }
   
+  //check threshold for each petal
+  if(lightVal > thresh3)
+  {
+    digitalWrite(petal3, HIGH);
+  }else{
+    digitalWrite(petal3, LOW);
+  }
+  
+  //check threshold for each petal
+  if(lightVal > thresh4)
+  {
+    digitalWrite(petal4, HIGH);
+  }else{
+    digitalWrite(petal4, LOW);
+  }
   
   //check for lower threshold
   //set petalPin to low
