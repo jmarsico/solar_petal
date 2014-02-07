@@ -1,14 +1,19 @@
-//petal pin assignments
-const int petal1 = 0;
-const int petal2 = 1;
-const int petal3 = 2;
-const int petal4 = 3;
+
+typedef struct Petal{
+  int pin;
+  boolean isClosed;
+  int timeOpen;
+  boolean Start;
+};
+
+Petal petal[4];
+
 
 //petal thresholds
-int thresh1 = 300;
+int thresh1 = 100;
 int thresh2 = 200;
-int thresh3 = 400;
-int thresh4 = 100;
+int thresh3 = 300;
+int thresh4 = 400;
 
 //photoresistor pin
 const int sensorPin = 0;
@@ -21,89 +26,186 @@ int sensorMin = 1023;
 int sensorMax = 0;
 int sensorValue = 0;
 
+//counter for petal timing
+int counter = 0;
+
+
+
 ////////////////////// SETUP //////////////////////////
+
 void setup(){
   Serial.begin(9600);
-  
-  pinMode(petal1, OUTPUT);
-  pinMode(petal2, OUTPUT);
-  pinMode(petal3, OUTPUT);
-  pinMode(petal4, OUTPUT);
-  
-  //calibration
+
+  petal[0].pin = 6;
+  petal[1].pin = 5;
+  petal[2].pin = 4;
+  petal[3].pin = 3;
+
+  petal[0].isClosed = false;
+  petal[1].isClosed = false;
+  petal[2].isClosed = false;
+  petal[3].isClosed = false;
+
+  pinMode(petal[0].pin, OUTPUT);
+  pinMode(petal[1].pin, OUTPUT);
+  pinMode(petal[2].pin, OUTPUT);
+  pinMode(petal[3].pin, OUTPUT);
+
+  for(int i = 0;i < 4; i++)
+  {
+    digitalWrite(petal[i].pin, LOW);
+  }
+
+  ///////////////calibration/////////////////////////////////
   Serial.println("calibrating...ramp light up and down.....");
-  while (millis() < 5000) {
-   sensorValue = analogRead(sensorPin);
+  while (millis() < 6000) {
+    sensorValue = analogRead(sensorPin);
 
-   // record the maximum sensor value
-   if (sensorValue > sensorMax) {
-     sensorMax = sensorValue;
-   }
+    // record the maximum sensor value
+    if (sensorValue > sensorMax) {
+      sensorMax = sensorValue;
+    }
 
-   // record the minimum sensor value
-   if (sensorValue < sensorMin) {
-     sensorMin = sensorValue;
-   }
- }
- 
- Serial.println("calibration finished");
- Serial.print("minimum value: ");
- Serial.println(sensorMin);
- Serial.print("maximum value: ");
- Serial.println(sensorMax);
-  
- //wait five seconds to let it all sink in 
- delay(5000);
+    // record the minimum sensor value
+    if (sensorValue < sensorMin) {
+      sensorMin = sensorValue;
+    }
+  }
+
+  Serial.println("calibration finished");
+  Serial.print("minimum value: ");
+  Serial.println(sensorMin);
+  Serial.print("maximum value: ");
+  Serial.println(sensorMax);
+
+  //wait five seconds to let it all sink in 
+  delay(5000);
 }
 
 
 //////////////////// LOOP /////////////////////////////
+
 void loop() {
   //read potentiometer and print value
   lightVal = analogRead(sensorPin);
-  
+
   //map values to 0 500
   lightVal = constrain(lightVal, sensorMin, sensorMax);
   lightVal = map(lightVal, sensorMin, sensorMax, 0.0, 500.0);
-  Serial.println(lightVal);
 
-  
-  //check threshold for each petal
-  if(lightVal > thresh1)
+
+
+
+/////////// check thresholds ////////////////////
+  if(lightVal>thresh1)
   {
-    digitalWrite(petal1, HIGH);
-  }else{
-    digitalWrite(petal1, LOW);
+    petal[0].isClosed = true;
+
+  } else {
+    petal[0].isClosed = false;
   }
-  
-  //check threshold for each petal
+
   if(lightVal > thresh2)
   {
-    digitalWrite(petal2, HIGH);
-  }else{
-    digitalWrite(petal2, LOW);
+    petal[1].isClosed = true;
+  } else {
+    petal[1].isClosed = false;
   }
-  
-  //check threshold for each petal
+
   if(lightVal > thresh3)
   {
-    digitalWrite(petal3, HIGH);
-  }else{
-    digitalWrite(petal3, LOW);
+    petal[2].isClosed = true;
+  } else {
+    petal[2].isClosed = false;
   }
-  
-  //check threshold for each petal
+
   if(lightVal > thresh4)
   {
-    digitalWrite(petal4, HIGH);
-  }else{
-    digitalWrite(petal4, LOW);
+    petal[3].isClosed = true;
+  } else {
+    petal[3].isClosed = false;
   }
-  
-  //check for lower threshold
-  //set petalPin to low
-  
+
+  //////////// ACTUATION ///////////////////////
+
+  if(petal[0].isClosed)
+  {
+    if(counter%100 == 0)
+    {
+      digitalWrite(petal[0].pin, !digitalRead(petal[0].pin));
+    }
+  } 
+
+
+  if(petal[1].isClosed)
+  {
+    if((counter - 20)%125 == 0)
+    {
+      digitalWrite(petal[1].pin, !digitalRead(petal[1].pin));
+    }
+  } 
+  else {
+    digitalWrite(petal[1].pin, LOW);
+  }
+
+  if(petal[2].isClosed)
+  {
+    if((counter - 50)%115 == 0)
+    {
+      digitalWrite(petal[2].pin, !digitalRead(petal[2].pin));
+    }
+  } 
+  else {
+    digitalWrite(petal[2].pin, LOW);
+  }
+
+  if(petal[3].isClosed)
+  {
+    if((counter - 30)%150== 0)
+    {
+      digitalWrite(petal[3].pin, !digitalRead(petal[3].pin));
+    }
+  } 
+  else {
+    digitalWrite(petal[3].pin, LOW);
+  }
+
+
+
+  Serial.print("counter: ");
+  Serial.print(counter);
+  Serial.print(" | Val: ");
+  Serial.print(lightVal);
+  for(int i = 0; i < 4; i++)
+  {
+    if(petal[i].isClosed)
+    {
+      Serial.print(" | ");
+      Serial.print(i);
+
+    }
+    Serial.print(" state: ");
+    Serial.print(digitalRead(petal[i].pin));
+  }
+  Serial.println();
+
+  //update counter
+  counter++;
+
+
+  //if lightVal very low, turn off all connections.
+  if(lightVal < thresh1)
+  {
+    for(int i = 0; i < 4; i++)
+    {
+      digitalWrite(petal[i].pin, LOW);
+    }
+  }
+
 }
+
+
+
 
 
 
